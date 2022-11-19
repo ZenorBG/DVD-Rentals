@@ -1,0 +1,63 @@
+WITH 
+
+-- getting movie categories
+category_info AS (
+	SELECT film_id,
+		category.name
+	FROM film_category
+	INNER JOIN category ON film_category.category_id = category.category_id
+),
+
+-- actors & number of participations 
+actor_particapation AS (
+	SELECT actor.actor_id,
+		CONCAT(first_name, ' ', last_name) AS actor_full_name,
+		COUNT(film_id) AS number_participation
+	FROM film_actor
+	INNER JOIN actor ON film_actor.actor_id = actor.actor_id
+	GROUP BY actor.actor_id
+),
+
+-- identifying most popular actor in each movie 
+actor_info AS (SELECT DISTINCT ON(film_id)
+	film_id,
+	actor_full_name AS most_popular_actor
+FROM film_actor
+INNER JOIN actor ON film_actor.actor_id = actor.actor_id
+INNER JOIN actor_particapation ON film_actor.actor_id = actor_particapation.actor_id
+GROUP BY film_id, most_popular_actor
+ORDER BY film_id, MAX(number_participation) DESC
+),
+
+-- identifying if movies are present in stores 1 & 2
+movie_inventory AS (
+	SELECT DISTINCT(film_id),
+		CASE 
+			WHEN store_id = 1 THEN TRUE
+			ELSE FALSE
+		END AS available_store1,
+		CASE 
+			WHEN store_id = 2 THEN TRUE
+			ELSE FALSE
+		END AS available_store2
+	FROM inventory
+)
+
+SELECT title,
+	film.film_id,
+	length AS movie_length,
+	release_year,
+	rental_duration,
+	rental_rate,
+	replacement_cost,
+	rating,
+	language.name AS movie_language,
+	category_info.name AS category,
+	actor_info.most_popular_actor,
+	COALESCE(movie_inventory.available_store1, FALSE) AS available_store1,
+	COALESCE(movie_inventory.available_store2, FALSE) AS available_store2
+FROM film
+INNER JOIN language ON film.language_id = language.language_id
+INNER JOIN category_info ON film.film_id = category_info.film_id
+LEFT JOIN actor_info ON film.film_id = actor_info.film_id
+LEFT JOIN movie_inventory ON film.film_id = movie_inventory.film_id

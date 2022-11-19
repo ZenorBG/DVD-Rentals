@@ -1,0 +1,10 @@
+SELECT rental.customer_id,
+	rental_date,
+	return_date,
+	film_id,
+	store_id,
+	amount AS payment_amount,
+	DATE(payment_date) AS payment_date
+FROM rental
+INNER JOIN inventory ON rental.inventory_id = inventory.inventory_id
+LEFT JOIN payment ON payment.rental_id = rental.rental_id

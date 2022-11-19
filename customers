@@ -1,0 +1,41 @@
+WITH 
+
+-- full adress with city & country
+full_address AS (
+SELECT address_id,
+	address,
+	postal_code,
+	city,
+	country
+FROM address
+INNER JOIN city ON city.city_id = address.city_id
+INNER JOIN country ON city.country_id = country.country_id
+),
+
+-- checking if customers are repeat
+repeat_customer AS (
+	SELECT customer_id,
+	LAG(customer_id) OVER (
+		PARTITION BY customer_id
+		ORDER BY customer_id, rental_date DESC
+	) AS repeating_customer
+FROM rental
+ORDER BY customer_id
+)
+
+SELECT customer.customer_id,
+	store_id,
+	CONCAT(first_name, ' ', last_name) AS customer_full_name,
+	active::BOOL,
+	address,
+	postal_code,
+	city,
+	country,
+	CASE 
+		WHEN MAX(repeating_customer) > 0 THEN TRUE
+		ELSE FALSE
+	END AS repeat_customer
+FROM customer
+INNER JOIN full_address ON full_address.address_id = customer.address_id
+LEFT JOIN repeat_customer ON customer.customer_id = repeat_customer.customer_id
+GROUP BY customer.customer_id, address, postal_code, city, country

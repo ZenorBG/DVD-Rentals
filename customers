@@ -1,6 +1,6 @@
 WITH 
 
--- full adress with city & country
+-- full address with city & country
 full_address AS (
 SELECT address_id,
 	address,
@@ -31,7 +31,7 @@ SELECT customer.customer_id,
 	postal_code,
 	city,
 	country,
-	CASE 
+	CASE https://github.com/ZenorBG/DVD-Rentals/blob/main/customers
 		WHEN MAX(repeating_customer) > 0 THEN TRUE
 		ELSE FALSE
 	END AS repeat_customer
